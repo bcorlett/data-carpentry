@@ -1,12 +1,16 @@
+import pdb
 import argparse
-import iris
+#import calendar
+
+import numpy as np
 import matplotlib.pyplot as plt
+import iris
 import iris.plot as iplt
 import iris.coord_categorisation
 import cmocean
-import numpy as np
 
-#import pdb
+# next block is self-published
+
 
 def read_data(fname, month):
     """Read an input data file"""
