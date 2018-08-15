@@ -26,6 +26,20 @@ def read_data(fname, month):
     return cube
 
 
+def mask_data(cube, fname, realm):
+    """mask data over land or ocean, specifying realm"""
+    
+    cube.data = np.ma.asarray(cube.data)
+    
+    sftlf_cube = iris.load_cube(fname, 'land_area_fraction')
+    if realm == 'ocean':
+        cube.data.mask = np.where(sftlf_cube.data < 50, True, False) #vectorised argument to create mask
+    elif realm == 'land': 
+        cube.data.mask = np.where(sftlf_cube.data > 50, True, False)
+
+    return(cube)
+    
+    
 def convert_pr_units(cube):
     """Convert kg m-2 s-1 to mm day-1"""
     
@@ -54,8 +68,10 @@ def plot_data(cube, month, gridlines=False, levels=None):
 def main(inargs):
     """Run the program."""
 
-    cube = read_data(inargs.infile, inargs.month)    
+    cube = read_data(inargs.infile, inargs.month)   
     cube = convert_pr_units(cube)
+    if type(inargs.mask) is list:
+        cube = mask_data(cube, inargs.mask[0], inargs.mask[1])
     clim = cube.collapsed('time', iris.analysis.MEAN)
     plot_data(clim, inargs.month, inargs.gridlines, inargs.cbar_levels)
     plt.savefig(inargs.outfile)
@@ -74,11 +90,15 @@ if __name__ == '__main__':
     parser.add_argument("outfile", type=str, help="Output file name")
 
     parser.add_argument("-g", "--gridlines", help="add gridlines", default=False, 
-                    action="store_true")
+                        action="store_true")
+    
+    parser.add_argument("-m", "--mask", type=str, nargs=2, metavar=('SFTLF_FILE','REALM'), default=None,
+                        help="apply land or ocean mask (specify realm to mask)")
+   
     parser.add_argument("-l", "--cbar_levels", type=float, nargs='*', default=None, 
-                    help='list of levels / tick marks to appear on the colorbar')#list of float numbers, as in: 0 1 2 3 4 5 6
+                        help='list of levels / tick marks to appear on the colorbar')#list of float numbers, as in: 0 1 2 3 4 5 6
 #    parser.add_argument("-l", "--cbar_levels", type=float, nargs=3, default=None, 
-#                    help='list of levels / tick marks to appear on the colorbar')#list of float numbers, as in: 0 1 2 3 
+#                      help='list of levels / tick marks to appear on the colorbar')#list of float numbers, as in: 0 1 2 3 
     
     
     args = parser.parse_args()
