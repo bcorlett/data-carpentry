@@ -29,19 +29,19 @@ def read_data(fname, month):
 def mask_data(cube, fname, realm):
     """mask data over land or ocean, specifying realm"""
     
-    cube.data = np.ma.asarray(cube.data)
-    
+    cube.data = np.ma.asarray(cube.data) #ensure maskable data
     sftlf_cube = iris.load_cube(fname, 'land_area_fraction')
     if realm == 'ocean':
         cube.data.mask = np.where(sftlf_cube.data < 50, True, False) #vectorised argument to create mask
     elif realm == 'land': 
         cube.data.mask = np.where(sftlf_cube.data > 50, True, False)
-
     return(cube)
     
     
 def convert_pr_units(cube):
     """Convert kg m-2 s-1 to mm day-1"""
+    
+    assert cube.units=='kg m-2 s-1', 'units of initial data should be kg m-2 s-1'
     
     cube.data = cube.data * 86400
     cube.units = 'mm/day'
@@ -71,6 +71,7 @@ def main(inargs):
     cube = read_data(inargs.infile, inargs.month)   
     cube = convert_pr_units(cube)
     if type(inargs.mask) is list:
+        assert inargs.mask[1]=='land' or inargs.mask[1]=='ocean', 'mask should specify land or ocean'
         cube = mask_data(cube, inargs.mask[0], inargs.mask[1])
     clim = cube.collapsed('time', iris.analysis.MEAN)
     plot_data(clim, inargs.month, inargs.gridlines, inargs.cbar_levels)
