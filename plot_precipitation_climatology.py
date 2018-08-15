@@ -9,8 +9,7 @@ import iris.plot as iplt
 import iris.coord_categorisation
 import cmocean
 
-# next block is self-published
-
+# next block would be self-published
 
 def read_data(fname, month):
     """Read an input data file"""
