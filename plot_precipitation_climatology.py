@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import iris
 import iris.plot as iplt
 import iris.coord_categorisation
+import cmdline_provenance as cmdprov
 import cmocean
 
 # next block would be self-published
@@ -68,14 +69,21 @@ def plot_data(cube, month, gridlines=False, levels=None):
 def main(inargs):
     """Run the program."""
 
+    inlogs = {}
+    my_log = cmdprov.new_log()
     cube = read_data(inargs.infile, inargs.month)   
+    inlogs[inargs.infile] = cube.attributes['history'] #add data history
     cube = convert_pr_units(cube)
     if type(inargs.mask) is list:
         assert inargs.mask[1]=='land' or inargs.mask[1]=='ocean', 'mask should specify land or ocean'
         cube = mask_data(cube, inargs.mask[0], inargs.mask[1])
+        inlogs[inargs.mask[0]] = cube.attributes['history'] #add mask history
     clim = cube.collapsed('time', iris.analysis.MEAN)
     plot_data(clim, inargs.month, inargs.gridlines, inargs.cbar_levels)
-    plt.savefig(inargs.outfile)
+    plt.savefig(inargs.outfile+'.png')
+    
+    my_log = cmdprov.new_log(infile_history=inlogs, git_repo='.')
+    cmdprov.write_log(inargs.outfile+'.log', my_log)
 
 
 if __name__ == '__main__':
